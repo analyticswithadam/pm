@@ -8,6 +8,16 @@ from sqlmodel import SQLModel, Session, select
 from database import engine, get_session
 import models  # Important: import models so SQLModel knows about them
 import schemas
+from openai import OpenAI
+from dotenv import load_dotenv
+
+load_dotenv() # Load environment variables from .env
+
+# Initialize OpenRouter client
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=os.getenv("OPENROUTER_API_KEY"),
+)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -118,6 +128,115 @@ def update_board(board_data: schemas.BoardData, session: Session = Depends(get_s
 @app.get("/api/hello")
 def hello_world():
     return {"message": "Hello World"}
+
+@app.get("/api/ai/test")
+def test_ai():
+    try:
+        response = client.chat.completions.create(
+            model="openai/gpt-oss-120b",
+            messages=[
+                {"role": "user", "content": "What is 2+2? Answer with just the number."}
+            ],
+        )
+        answer = response.choices[0].message.content.strip()
+        return {"status": "success", "answer": answer}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.post("/api/ai/chat", response_model=schemas.ChatResponse)
+def chat_with_ai(request: schemas.ChatRequest, session: Session = Depends(get_session)):
+    user = get_or_create_user(session)
+    board = session.exec(select(models.Board).where(models.Board.user_id == user.id)).first()
+    
+    system_prompt = f"""
+    You are a project management assistant. You help the user manage their Kanban board.
+    The current board state is: {request.board.model_dump_json()}
+    
+    You must respond in JSON format with a 'reply' (string) and an optional 'commands' (array of objects).
+    Each command object must have an 'action' and a 'payload'.
+    
+    Supported actions:
+    - add_card: payload = {{"column_id": str, "title": str, "details": str}}
+    - move_card: payload = {{"card_id": str, "column_id": str}}
+    - delete_card: payload = {{"card_id": str}}
+    - rename_column: payload = {{"column_id": str, "title": str}}
+    
+    Example:
+    {{
+        "reply": "I've added a new card to the Backlog for you.",
+        "commands": [
+            {{"action": "add_card", "payload": {{"column_id": "col-backlog", "title": "New Task", "details": "Description"}} }}
+        ]
+    }}
+    """
+    
+    messages = [{"role": "system", "content": system_prompt}]
+    for msg in request.history:
+        messages.append({"role": msg.role, "content": msg.content})
+    messages.append({"role": "user", "content": request.message})
+    
+    try:
+        response = client.chat.completions.create(
+            model="openai/gpt-oss-120b",
+            messages=messages,
+            response_format={"type": "json_object"}
+        )
+        
+        import json
+        ai_data = json.loads(response.choices[0].message.content)
+        
+        reply = ai_data.get("reply", "")
+        commands = ai_data.get("commands", [])
+        
+        # Apply commands to DB
+        for cmd in commands:
+            action = cmd.get("action")
+            payload = cmd.get("payload", {})
+            
+            if action == "add_card":
+                col_id = payload.get("column_id")
+                # Find max order in that column
+                cards = session.exec(select(models.Card).where(models.Card.column_id == col_id)).all()
+                max_order = max([c.order for c in cards], default=-1)
+                new_card = models.Card(
+                    id=f"card-{uuid.uuid4().hex[:8]}",
+                    column_id=col_id,
+                    title=payload.get("title", "Untitled"),
+                    details=payload.get("details", ""),
+                    order=max_order + 1
+                )
+                session.add(new_card)
+            
+            elif action == "move_card":
+                card_id = payload.get("card_id")
+                new_col_id = payload.get("column_id")
+                card = session.get(models.Card, card_id)
+                if card:
+                    card.column_id = new_col_id
+                    # Move to end of new column
+                    cards = session.exec(select(models.Card).where(models.Card.column_id == new_col_id)).all()
+                    max_order = max([c.order for c in cards], default=-1)
+                    card.order = max_order + 1
+            
+            elif action == "delete_card":
+                card_id = payload.get("card_id")
+                card = session.get(models.Card, card_id)
+                if card:
+                    session.delete(card)
+            
+            elif action == "rename_column":
+                col_id = payload.get("column_id")
+                new_title = payload.get("title")
+                column = session.get(models.Column, col_id)
+                if column:
+                    column.title = new_title
+                    
+        session.commit()
+        
+        return schemas.ChatResponse(reply=reply, commands=commands)
+        
+    except Exception as e:
+        return schemas.ChatResponse(reply=f"Sorry, I encountered an error: {str(e)}")
 
 # Mount the static directory to serve the frontend
 static_dir = os.path.join(os.path.dirname(__file__), "static")

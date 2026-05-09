@@ -65,15 +65,15 @@
 **Success Criteria:** True full-stack persistent Kanban board.
 
 ## Part 8: AI connectivity
-- [ ] Inject `OPENROUTER_API_KEY` via `.env`.
-- [ ] Create `GET /api/ai/test` endpoint testing a prompt against the requested `openai/gpt-oss-120b` OpenRouter model.
+- [x] Inject `OPENROUTER_API_KEY` via `.env`.
+- [x] Create `GET /api/ai/test` endpoint testing a prompt against the requested `openai/gpt-oss-120b` OpenRouter model.
 **Tests:** Call `/api/ai/test` with a "2+2" prompt, expect "4" response.
 **Success Criteria:** Proven backend connectivity to OpenRouter using the designated model.
 
 ## Part 9: AI with Structured Outputs
-- [ ] Add `POST /api/ai/chat` taking the user message, history, and current Kanban state (serialized to JSON for the prompt).
-- [ ] Configure OpenRouter to return Structured Outputs (JSON Schema) containing an AI reply and optional kanban commands (e.g., `add_card`, `move_card`).
-- [ ] Translate AI outputs into backend DB operations.
+- [x] Add `POST /api/ai/chat` taking the user message, history, and current Kanban state (serialized to JSON for the prompt).
+- [x] Configure OpenRouter to return Structured Outputs (JSON Schema) containing an AI reply and optional kanban commands (e.g., `add_card`, `move_card`).
+- [x] Translate AI outputs into backend DB operations.
 **Tests:** Pass a mock "Create a card for QA" message to the endpoint, verify database receives a new card.
 **Success Criteria:** AI reliably determines when and how to update the board state.
 
