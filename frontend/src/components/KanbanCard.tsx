@@ -1,6 +1,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import clsx from "clsx";
+import { Trash2 } from "lucide-react";
 import type { Card } from "@/lib/kanban";
 
 type KanbanCardProps = {
@@ -24,28 +25,31 @@ export const KanbanCard = ({ card, onDelete }: KanbanCardProps) => {
       className={clsx(
         "rounded-2xl border border-transparent bg-white px-4 py-4 shadow-[0_12px_24px_rgba(3,33,71,0.08)]",
         "transition-all duration-150",
-        isDragging && "opacity-60 shadow-[0_18px_32px_rgba(3,33,71,0.16)]"
+        isDragging && "opacity-60 shadow-[0_18_32px_rgba(3,33,71,0.16)]"
       )}
       {...attributes}
       {...listeners}
       data-testid={`card-${card.id}`}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h4 className="font-display text-base font-semibold text-[var(--navy-dark)]">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 overflow-hidden">
+          <h4 className="truncate font-display text-sm font-semibold text-[var(--navy-dark)]">
             {card.title}
           </h4>
-          <p className="mt-2 text-sm leading-6 text-[var(--gray-text)]">
+          <p className="mt-1 text-xs leading-5 text-[var(--gray-text)] line-clamp-2">
             {card.details}
           </p>
         </div>
         <button
           type="button"
-          onClick={() => onDelete(card.id)}
-          className="rounded-full border border-transparent px-2 py-1 text-xs font-semibold text-[var(--gray-text)] transition hover:border-[var(--stroke)] hover:text-[var(--navy-dark)]"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(card.id);
+          }}
+          className="group/btn flex h-6 w-6 items-center justify-center rounded-md text-[var(--gray-text)] transition-colors hover:bg-red-50 hover:text-red-500"
           aria-label={`Delete ${card.title}`}
         >
-          Remove
+          <Trash2 size={14} className="opacity-40 transition-opacity group-hover/btn:opacity-100" />
         </button>
       </div>
     </article>

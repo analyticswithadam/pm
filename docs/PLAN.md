@@ -78,8 +78,8 @@
 **Success Criteria:** AI reliably determines when and how to update the board state.
 
 ## Part 10: AI Sidebar Widget
-- [ ] Build a sleek, responsive chat sidebar in the Next.js app using project colors.
-- [ ] Wire the UI to send messages to `POST /api/ai/chat`.
-- [ ] Trigger an automatic frontend state refresh if the AI's response indicates the board was modified.
+- [x] Build a sleek, responsive chat sidebar in the Next.js app using project colors.
+- [x] Wire the UI to send messages to `POST /api/ai/chat`.
+- [x] Trigger an automatic frontend state refresh if the AI's response indicates the board was modified.
 **Tests:** Conduct end-to-end test via UI: say "move 'Design card layout' to 'Done'", verify UI updates instantly.
 **Success Criteria:** A "wow" user experience blending the manual Kanban board with AI superpowers.

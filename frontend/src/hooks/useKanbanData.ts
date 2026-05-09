@@ -45,5 +45,5 @@ export function useKanbanData() {
     }
   };
 
-  return { board, setBoard, loading, error, syncBoard };
+  return { board, setBoard, loading, error, syncBoard, fetchBoard };
 }

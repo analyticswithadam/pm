@@ -8,3 +8,5 @@ services:
     environment:
       - PYTHONDONTWRITEBYTECODE=1
       - PYTHONUNBUFFERED=1
+    env_file:
+      - .env
