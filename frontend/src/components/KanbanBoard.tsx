@@ -1,23 +1,31 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   DndContext,
   DragOverlay,
   PointerSensor,
   useSensor,
   useSensors,
-  closestCorners,
+  rectIntersection,
   type DragEndEvent,
   type DragStartEvent,
+  type DragOverEvent,
 } from "@dnd-kit/core";
 import { KanbanColumn } from "@/components/KanbanColumn";
 import { KanbanCardPreview } from "@/components/KanbanCardPreview";
-import { createId, initialData, moveCard, type BoardData } from "@/lib/kanban";
+import { createId, initialData, moveCard, findColumnId, type BoardData } from "@/lib/kanban";
 
 export const KanbanBoard = () => {
+  const router = useRouter();
   const [board, setBoard] = useState<BoardData>(() => initialData);
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
+
+  const handleSignOut = () => {
+    localStorage.removeItem("auth");
+    router.replace("/login");
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -29,6 +37,25 @@ export const KanbanBoard = () => {
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveCardId(event.active.id as string);
+  };
+
+  const handleDragOver = (event: DragOverEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    setBoard((prev) => {
+      const activeColumnId = findColumnId(prev.columns, active.id as string);
+      const overColumnId = findColumnId(prev.columns, over.id as string);
+
+      if (!activeColumnId || !overColumnId || activeColumnId === overColumnId) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        columns: moveCard(prev.columns, active.id as string, over.id as string),
+      };
+    });
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -111,13 +138,22 @@ export const KanbanBoard = () => {
                 and capture quick notes without getting buried in settings.
               </p>
             </div>
-            <div className="rounded-2xl border border-[var(--stroke)] bg-[var(--surface)] px-5 py-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[var(--gray-text)]">
-                Focus
-              </p>
-              <p className="mt-2 text-lg font-semibold text-[var(--primary-blue)]">
-                One board. Five columns. Zero clutter.
-              </p>
+            <div className="flex flex-col items-end gap-3">
+              <div className="rounded-2xl border border-[var(--stroke)] bg-[var(--surface)] px-5 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[var(--gray-text)]">
+                  Focus
+                </p>
+                <p className="mt-2 text-lg font-semibold text-[var(--primary-blue)]">
+                  One board. Five columns. Zero clutter.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="text-xs font-semibold uppercase tracking-wide text-[var(--purple-secondary)] transition hover:text-[#63297a]"
+              >
+                Sign Out
+              </button>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-4">
@@ -135,8 +171,9 @@ export const KanbanBoard = () => {
 
         <DndContext
           sensors={sensors}
-          collisionDetection={closestCorners}
+          collisionDetection={rectIntersection}
           onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
           onDragEnd={handleDragEnd}
         >
           <section className="grid gap-6 lg:grid-cols-5">
