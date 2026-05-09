@@ -15,11 +15,12 @@ import {
 } from "@dnd-kit/core";
 import { KanbanColumn } from "@/components/KanbanColumn";
 import { KanbanCardPreview } from "@/components/KanbanCardPreview";
-import { createId, initialData, moveCard, findColumnId, type BoardData } from "@/lib/kanban";
+import { createId, moveCard, findColumnId, type BoardData } from "@/lib/kanban";
+import { useKanbanData } from "@/hooks/useKanbanData";
 
 export const KanbanBoard = () => {
   const router = useRouter();
-  const [board, setBoard] = useState<BoardData>(() => initialData);
+  const { board, loading, syncBoard } = useKanbanData();
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
 
   const handleSignOut = () => {
@@ -43,18 +44,16 @@ export const KanbanBoard = () => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
-    setBoard((prev) => {
-      const activeColumnId = findColumnId(prev.columns, active.id as string);
-      const overColumnId = findColumnId(prev.columns, over.id as string);
+    const activeColumnId = findColumnId(board.columns, active.id as string);
+    const overColumnId = findColumnId(board.columns, over.id as string);
 
-      if (!activeColumnId || !overColumnId || activeColumnId === overColumnId) {
-        return prev;
-      }
+    if (!activeColumnId || !overColumnId || activeColumnId === overColumnId) {
+      return;
+    }
 
-      return {
-        ...prev,
-        columns: moveCard(prev.columns, active.id as string, over.id as string),
-      };
+    syncBoard({
+      ...board,
+      columns: moveCard(board.columns, active.id as string, over.id as string),
     });
   };
 
@@ -66,57 +65,63 @@ export const KanbanBoard = () => {
       return;
     }
 
-    setBoard((prev) => ({
-      ...prev,
-      columns: moveCard(prev.columns, active.id as string, over.id as string),
-    }));
+    syncBoard({
+      ...board,
+      columns: moveCard(board.columns, active.id as string, over.id as string),
+    });
   };
 
   const handleRenameColumn = (columnId: string, title: string) => {
-    setBoard((prev) => ({
-      ...prev,
-      columns: prev.columns.map((column) =>
+    syncBoard({
+      ...board,
+      columns: board.columns.map((column) =>
         column.id === columnId ? { ...column, title } : column
       ),
-    }));
+    });
   };
 
   const handleAddCard = (columnId: string, title: string, details: string) => {
     const id = createId("card");
-    setBoard((prev) => ({
-      ...prev,
+    syncBoard({
+      ...board,
       cards: {
-        ...prev.cards,
+        ...board.cards,
         [id]: { id, title, details: details || "No details yet." },
       },
-      columns: prev.columns.map((column) =>
+      columns: board.columns.map((column) =>
         column.id === columnId
           ? { ...column, cardIds: [...column.cardIds, id] }
           : column
       ),
-    }));
+    });
   };
 
   const handleDeleteCard = (columnId: string, cardId: string) => {
-    setBoard((prev) => {
-      return {
-        ...prev,
-        cards: Object.fromEntries(
-          Object.entries(prev.cards).filter(([id]) => id !== cardId)
-        ),
-        columns: prev.columns.map((column) =>
-          column.id === columnId
-            ? {
-                ...column,
-                cardIds: column.cardIds.filter((id) => id !== cardId),
-              }
-            : column
-        ),
-      };
+    syncBoard({
+      ...board,
+      cards: Object.fromEntries(
+        Object.entries(board.cards).filter(([id]) => id !== cardId)
+      ),
+      columns: board.columns.map((column) =>
+        column.id === columnId
+          ? {
+              ...column,
+              cardIds: column.cardIds.filter((id) => id !== cardId),
+            }
+          : column
+      ),
     });
   };
 
   const activeCard = activeCardId ? cardsById[activeCardId] : null;
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[var(--surface)]">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[var(--stroke)] border-t-[var(--primary-blue)]"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative overflow-hidden">

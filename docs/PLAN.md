@@ -1,5 +1,21 @@
 # Project Plan
 
+## Architecture & Design Decisions (MVP)
+
+### Backend
+- **Framework**: FastAPI (Python) serving both the REST API and the static frontend.
+- **Database**: SQLite with SQLModel (ORM). The database file `kanban.db` is currently ephemeral (stored inside the container) and is initialized automatically via a lifespan event.
+- **API Strategy**: **Bulk Synchronization**. Instead of granular event-based endpoints, the frontend sends the entire board state (columns and cards) via `PUT /api/board` on every modification. The backend then performs a clean sync with the database.
+- **Authentication**: Simple dummy barrier for MVP. Accepts hardcoded "user" / "password". Session state managed via `localStorage` on the client.
+
+### Frontend
+- **Framework**: Next.js with TypeScript.
+- **Deployment**: Static Export (`output: 'export'`). The `out/` directory is bundled into the Docker image and served by FastAPI.
+- **State Management**: Custom React hook `useKanbanData` manages local state and handles asynchronous syncing with the backend.
+- **Persistence**: Changes are optimistically updated in the UI and immediately persisted to the backend.
+
+---
+
 ## Part 1: Plan
 - [x] Enrich PLAN.md to detail all substeps, tests, and success criteria.
 - [x] Create `frontend/AGENTS.md` to describe the existing React/Next.js codebase.
@@ -42,10 +58,10 @@
 **Tests:** `pytest` suite passes.
 **Success Criteria:** An API exists to load and save the entire board state accurately. Complete backend API allowing full manipulation of the Kanban board.
 
-## Part 7: Frontend + Backend
-- [ ] Refactor frontend (`lib/kanban.ts`, hooks) to use real data from the backend APIs instead of hardcoded `initialData`.
-- [ ] Trigger API updates on card moves and edits (Drag and Drop events).
-**Tests:** Move a card in UI, refresh page, verify card persists in new location.
+## Part 7: Frontend + Backend Integration
+- [x] Refactor frontend (`lib/kanban.ts`, hooks) to use real data from the backend APIs instead of hardcoded `initialData`.
+- [x] Trigger API updates on all user actions (Drag and Drop, renames, adds, deletes).
+**Tests:** Verified via browser persistence tests (renames and moves persist across refreshes).
 **Success Criteria:** True full-stack persistent Kanban board.
 
 ## Part 8: AI connectivity
