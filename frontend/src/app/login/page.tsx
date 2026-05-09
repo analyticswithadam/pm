@@ -83,9 +83,9 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            className="mt-2 rounded-full bg-[var(--purple-secondary)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#63297a]"
+            className="mt-2 rounded-full bg-[var(--purple-secondary)] px-4 py-3 text-sm font-semibold tracking-wide text-white shadow-md transition hover:bg-[#63297a] hover:shadow-lg"
           >
-            Sign In
+            Login
           </button>
         </form>
       </main>

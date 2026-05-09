@@ -127,9 +127,11 @@ export const KanbanBoard = () => {
         <header className="flex flex-col gap-6 rounded-[32px] border border-[var(--stroke)] bg-white/80 p-8 shadow-[var(--shadow)] backdrop-blur">
           <div className="flex flex-wrap items-start justify-between gap-6">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[var(--gray-text)]">
-                Single Board Kanban
-              </p>
+              <div className="flex items-center gap-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[var(--gray-text)]">
+                  Single Board Kanban
+                </p>
+              </div>
               <h1 className="mt-3 font-display text-4xl font-semibold text-[var(--navy-dark)]">
                 Kanban Studio
               </h1>
@@ -138,7 +140,14 @@ export const KanbanBoard = () => {
                 and capture quick notes without getting buried in settings.
               </p>
             </div>
-            <div className="flex flex-col items-end gap-3">
+            <div className="flex flex-col items-end gap-6">
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="rounded-full border border-[var(--stroke)] bg-white px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-[var(--navy-dark)] shadow-sm transition hover:border-[var(--purple-secondary)] hover:text-[var(--purple-secondary)] hover:shadow"
+              >
+                Sign Out
+              </button>
               <div className="rounded-2xl border border-[var(--stroke)] bg-[var(--surface)] px-5 py-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[var(--gray-text)]">
                   Focus
@@ -147,13 +156,6 @@ export const KanbanBoard = () => {
                   One board. Five columns. Zero clutter.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={handleSignOut}
-                className="text-xs font-semibold uppercase tracking-wide text-[var(--purple-secondary)] transition hover:text-[#63297a]"
-              >
-                Sign Out
-              </button>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-4">

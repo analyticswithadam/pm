@@ -30,17 +30,17 @@
 **Success Criteria:** The Kanban board is protected by the dummy sign-in barrier.
 
 ## Part 5: Database modeling
-- [ ] Propose SQLite relational database schema (Users, Boards, Columns, Cards) and document in `docs/DB_SCHEMA.md`.
-- [ ] Get user sign-off on the schema.
-- [ ] Configure SQLite and ORM (e.g., SQLAlchemy/SQLModel) in the backend. (Note: initial testing may use a JSON payload, but persistence will be relational).
+- [x] Propose SQLite relational database schema (Users, Boards, Columns, Cards) and document in `docs/DB_SCHEMA.md`.
+- [x] Get user sign-off on the schema.
+- [x] Configure SQLite and ORM (e.g., SQLAlchemy/SQLModel) in the backend. (Note: initial testing may use a JSON payload, but persistence will be relational).
 **Tests:** Startup creates `kanban.db` cleanly.
 **Success Criteria:** DB schema is documented, approved, and integrated into FastAPI.
 
-## Part 6: Backend
-- [ ] Add CRUD API endpoints for Kanban (`GET /api/board`, `PUT /api/card`, etc.).
-- [ ] Write comprehensive backend tests (pytest) to cover reading and modifying the database state.
-**Tests:** Test API endpoints modify SQLite database accurately.
-**Success Criteria:** Complete backend API allowing full manipulation of the Kanban board.
+## Part 6: Backend CRUD APIs
+- [x] Add CRUD API endpoints for Kanban (`GET /api/board`, `PUT /api/board`).
+- [x] Write comprehensive backend tests (pytest) to cover reading and modifying the database state.
+**Tests:** `pytest` suite passes.
+**Success Criteria:** An API exists to load and save the entire board state accurately. Complete backend API allowing full manipulation of the Kanban board.
 
 ## Part 7: Frontend + Backend
 - [ ] Refactor frontend (`lib/kanban.ts`, hooks) to use real data from the backend APIs instead of hardcoded `initialData`.
