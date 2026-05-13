@@ -1,5 +1,11 @@
 import { expect, test } from "@playwright/test";
 
+test.beforeEach(async ({ page }) => {
+  // Set auth token before each test so AuthProvider does not redirect to /login
+  await page.goto("/login");
+  await page.evaluate(() => localStorage.setItem("auth", "true"));
+});
+
 test("loads the kanban board", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Kanban Studio" })).toBeVisible();
