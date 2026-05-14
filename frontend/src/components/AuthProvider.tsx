@@ -1,34 +1,33 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { useRouter, usePathname } from "next/navigation";
+
+function subscribe(callback: () => void) {
+  window.addEventListener("storage", callback);
+  return () => window.removeEventListener("storage", callback);
+}
+
+const getToken = () => localStorage.getItem("token");
+const getTokenServer = () => null;
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const pathname = usePathname();
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+
+  // useSyncExternalStore avoids hydration mismatch: server uses null, client reads localStorage
+  const token = useSyncExternalStore(subscribe, getToken, getTokenServer);
+  const isAuthenticated = typeof token === "string" && token.length > 0;
 
   useEffect(() => {
-    // Check localStorage for the fake auth token
-    const token = localStorage.getItem("auth");
-    
-    if (token === "true") {
-      setIsAuthenticated(true);
-      // If they are on the login page but already authenticated, send them to the board
-      if (pathname === "/login") {
-        router.replace("/");
-      }
-    } else {
-      setIsAuthenticated(false);
-      // If they are not authenticated and not on the login page, send them to login
-      if (pathname !== "/login") {
-        router.replace("/login");
-      }
+    if (isAuthenticated && pathname === "/login") {
+      router.replace("/");
+    } else if (!isAuthenticated && pathname !== "/login") {
+      router.replace("/login");
     }
-  }, [pathname, router]);
+  }, [isAuthenticated, pathname, router]);
 
-  // While checking auth on mount, or if unauthenticated and redirecting, show a loader
-  if (isAuthenticated === null || (isAuthenticated === false && pathname !== "/login")) {
+  if (!isAuthenticated && pathname !== "/login") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[var(--surface-strong)]">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-[var(--stroke)] border-t-[var(--primary-blue)]" />
@@ -36,6 +35,5 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  // Render children normally if authenticated or if on the login page
   return <>{children}</>;
 };

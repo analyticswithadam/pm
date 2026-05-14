@@ -15,17 +15,17 @@ import {
 } from "@dnd-kit/core";
 import { KanbanColumn } from "@/components/KanbanColumn";
 import { KanbanCardPreview } from "@/components/KanbanCardPreview";
-import { createId, moveCard, findColumnId, type BoardData } from "@/lib/kanban";
+import { createId, moveCard, findColumnId } from "@/lib/kanban";
 import { useKanbanData } from "@/hooks/useKanbanData";
 import { ChatSidebar } from "@/components/ChatSidebar";
 
 export const KanbanBoard = () => {
   const router = useRouter();
-  const { board, loading, syncBoard, fetchBoard } = useKanbanData();
+  const { board, setBoard, loading, syncBoard, fetchBoard, syncError } = useKanbanData();
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
 
   const handleSignOut = () => {
-    localStorage.removeItem("auth");
+    localStorage.removeItem("token");
     router.replace("/login");
   };
 
@@ -41,6 +41,7 @@ export const KanbanBoard = () => {
     setActiveCardId(event.active.id as string);
   };
 
+  // Update local state only during drag — one PUT fires in handleDragEnd
   const handleDragOver = (event: DragOverEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
@@ -52,7 +53,7 @@ export const KanbanBoard = () => {
       return;
     }
 
-    syncBoard({
+    setBoard({
       ...board,
       columns: moveCard(board.columns, active.id as string, over.id as string),
     });
@@ -126,6 +127,12 @@ export const KanbanBoard = () => {
 
   return (
     <div className="relative overflow-hidden">
+      {syncError && (
+        <div className="fixed top-4 left-1/2 z-50 -translate-x-1/2 rounded-xl border border-red-300 bg-red-50 px-5 py-2.5 text-sm text-red-700 shadow-md">
+          {syncError}
+        </div>
+      )}
+
       <div className="pointer-events-none absolute left-0 top-0 h-[420px] w-[420px] -translate-x-1/3 -translate-y-1/3 rounded-full bg-[radial-gradient(circle,_rgba(32,157,215,0.25)_0%,_rgba(32,157,215,0.05)_55%,_transparent_70%)]" />
       <div className="pointer-events-none absolute bottom-0 right-0 h-[520px] w-[520px] translate-x-1/4 translate-y-1/4 rounded-full bg-[radial-gradient(circle,_rgba(117,57,145,0.18)_0%,_rgba(117,57,145,0.05)_55%,_transparent_75%)]" />
 
@@ -197,7 +204,7 @@ export const KanbanBoard = () => {
                 />
               ))}
             </section>
-            
+
             <aside className="flex-[1.2] min-w-[300px] h-full">
               <ChatSidebar board={board} onRefreshBoard={fetchBoard} />
             </aside>

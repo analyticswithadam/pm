@@ -8,20 +8,37 @@ export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (username === "user" && password === "password") {
-      localStorage.setItem("auth", "true");
+    setError("");
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+
+      if (!response.ok) {
+        setError("Invalid credentials. Please try again.");
+        return;
+      }
+
+      const data = await response.json();
+      localStorage.setItem("token", data.token);
       router.replace("/");
-    } else {
-      setError("Invalid credentials. Try user/password.");
+    } catch {
+      setError("Could not connect to the server. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-[var(--surface-strong)] px-6">
-      {/* Background decorations matching the Kanban board */}
       <div className="pointer-events-none absolute left-0 top-0 h-[420px] w-[420px] -translate-x-1/3 -translate-y-1/3 rounded-full bg-[radial-gradient(circle,_rgba(32,157,215,0.25)_0%,_rgba(32,157,215,0.05)_55%,_transparent_70%)]" />
       <div className="pointer-events-none absolute bottom-0 right-0 h-[520px] w-[520px] translate-x-1/4 translate-y-1/4 rounded-full bg-[radial-gradient(circle,_rgba(117,57,145,0.18)_0%,_rgba(117,57,145,0.05)_55%,_transparent_75%)]" />
 
@@ -44,7 +61,7 @@ export default function LoginPage() {
               {error}
             </div>
           )}
-          
+
           <div className="flex flex-col gap-2">
             <label
               htmlFor="username"
@@ -83,9 +100,10 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            className="mt-2 rounded-full bg-[var(--secondary-purple)] px-4 py-3 text-sm font-semibold tracking-wide text-white shadow-md transition hover:bg-[#63297a] hover:shadow-lg"
+            disabled={isLoading}
+            className="mt-2 rounded-full bg-[var(--secondary-purple)] px-4 py-3 text-sm font-semibold tracking-wide text-white shadow-md transition hover:bg-[#63297a] hover:shadow-lg disabled:opacity-60"
           >
-            Login
+            {isLoading ? "Signing in..." : "Login"}
           </button>
         </form>
       </main>

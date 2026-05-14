@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Literal
 
 class CardData(BaseModel):
     id: str
@@ -16,7 +16,7 @@ class BoardData(BaseModel):
     cards: Dict[str, CardData]
 
 class ChatMessage(BaseModel):
-    role: str
+    role: Literal["user", "assistant", "system"]
     content: str
 
 class ChatRequest(BaseModel):
@@ -31,3 +31,10 @@ class AICommand(BaseModel):
 class ChatResponse(BaseModel):
     reply: str
     commands: Optional[List[AICommand]] = None
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+class LoginResponse(BaseModel):
+    token: str

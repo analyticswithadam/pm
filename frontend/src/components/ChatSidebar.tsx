@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Send, Bot, User, X, Sparkles, MessageSquare } from "lucide-react";
+import { motion } from "framer-motion";
+import { Send, Bot, User, Sparkles } from "lucide-react";
 import { BoardData } from "@/lib/kanban";
 
 interface ChatMessage {
@@ -15,8 +15,12 @@ interface ChatSidebarProps {
   onRefreshBoard: () => Promise<void>;
 }
 
+function getAuthHeader(): Record<string, string> {
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 export const ChatSidebar = ({ board, onRefreshBoard }: ChatSidebarProps) => {
-  const [isOpen, setIsOpen] = useState(true);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -41,7 +45,10 @@ export const ChatSidebar = ({ board, onRefreshBoard }: ChatSidebarProps) => {
     try {
       const response = await fetch("/api/ai/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeader(),
+        },
         body: JSON.stringify({
           message: userMessage,
           history: messages,
@@ -49,15 +56,18 @@ export const ChatSidebar = ({ board, onRefreshBoard }: ChatSidebarProps) => {
         }),
       });
 
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+
       const data = await response.json();
-      
+
       setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
-      
+
       if (data.commands && data.commands.length > 0) {
-        // If the AI modified the board, refresh the frontend state
         await onRefreshBoard();
       }
-    } catch (error) {
+    } catch {
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: "Sorry, I encountered an error connecting to the AI." },
@@ -93,8 +103,8 @@ export const ChatSidebar = ({ board, onRefreshBoard }: ChatSidebarProps) => {
           <div className="flex flex-col items-center justify-center h-full text-center opacity-60">
             <Sparkles size={40} className="text-[var(--primary-blue)] mb-4" />
             <p className="text-xs text-[var(--gray-text)] font-medium leading-relaxed">
-              Ask me to "Add a card to Backlog"<br />
-              or "Move card-1 to Done".
+              Ask me to &ldquo;Add a card to Backlog&rdquo;<br />
+              or &ldquo;Move card-1 to Done&rdquo;.
             </p>
           </div>
         )}
@@ -112,8 +122,8 @@ export const ChatSidebar = ({ board, onRefreshBoard }: ChatSidebarProps) => {
                 {msg.role === "user" ? <User size={14} /> : <Bot size={14} />}
               </div>
               <div className={`rounded-2xl px-3 py-2 text-xs shadow-sm ${
-                msg.role === "user" 
-                  ? "bg-white text-[var(--navy-dark)] rounded-tr-none border border-[var(--stroke)]" 
+                msg.role === "user"
+                  ? "bg-white text-[var(--navy-dark)] rounded-tr-none border border-[var(--stroke)]"
                   : "bg-[var(--navy-dark)] text-white rounded-tl-none"
               }`}>
                 {msg.content}
